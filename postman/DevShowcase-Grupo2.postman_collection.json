@@ -1,21 +1,159 @@
 {
   "info": {
     "name": "DevShowcase API - Grupo 2",
-    "description": "Roteiro de demonstração em ordem. Rode com o banco zerado (apague data/devshowcase.db) para os ids baterem.",
+    "description": "Roteiro de demonstração da etapa 2 (rode as pastas em ordem ou use o Runner na coleção inteira).\n\n- Troque a variável da coleção `baseUrl` para a URL do Render na hora do vídeo (padrão: http://localhost:3000).\n- A pasta \"0. Preparação\" popula o banco e guarda os ids em variáveis; pode rodar de novo sem zerar o banco.\n- Todas as requisições têm testes do status esperado.\n- Curtidas, médias e paginação são conferidas em relação ao que a API tinha logo antes do envio, então dá para reenviar qualquer requisição (ou rodar de novo só uma pasta) sem zerar o banco.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Toda resposta de erro precisa seguir o formato do manipulador global",
+          "if (pm.response.code >= 400) {",
+          "  pm.test('Erro no formato padrão (status, error, message, path, timestamp)', () => {",
+          "    const body = pm.response.json();",
+          "    pm.expect(body.status).to.eql(pm.response.code);",
+          "    pm.expect(body).to.include.keys('error', 'message', 'path', 'timestamp');",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:3000"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "techNodeId",
+      "value": ""
+    },
+    {
+      "key": "techExpressId",
+      "value": ""
+    },
+    {
+      "key": "techReactId",
+      "value": ""
+    },
+    {
+      "key": "techPostgresId",
+      "value": ""
+    },
+    {
+      "key": "maraId",
+      "value": ""
+    },
+    {
+      "key": "maraEmail",
+      "value": ""
+    },
+    {
+      "key": "eldaId",
+      "value": ""
+    },
+    {
+      "key": "agendaId",
+      "value": ""
+    },
+    {
+      "key": "estoqueId",
+      "value": ""
+    },
+    {
+      "key": "cardapioId",
+      "value": ""
+    },
+    {
+      "key": "ultimoIdPagina1",
+      "value": ""
+    },
+    {
+      "key": "paginaAposFim",
+      "value": ""
+    },
+    {
+      "key": "upvotesAgenda",
+      "value": ""
+    },
+    {
+      "key": "upvotesEstoque",
+      "value": ""
+    },
+    {
+      "key": "somaNotasAntes",
+      "value": ""
+    },
+    {
+      "key": "feedbacksAntes",
+      "value": ""
+    },
+    {
+      "key": "mediaAgenda",
+      "value": ""
+    },
+    {
+      "key": "totalFeedbacksAgenda",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "1. Tecnologias",
+      "name": "0. Preparação",
+      "description": "Popula um banco vazio (ou já usado) com tecnologias, perfis e projetos e guarda os ids em variáveis da coleção. Pode rodar quantas vezes quiser. Se reenviar só o cadastro de um perfil, reenvie também os projetos dele (o perfil novo começa sem projetos).",
       "item": [
         {
-          "name": "Criar tecnologia - Node.js",
+          "name": "Verificar se a API está no ar (health)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde { status: \"ok\" }', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "No Render Free a primeira chamada pode demorar enquanto o serviço acorda."
+          }
+        },
+        {
+          "name": "Cadastrar tecnologia - Node.js",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 (criada) ou 409 (já cadastrada)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('techNodeId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -34,7 +172,7 @@
                 "technologies"
               ]
             },
-            "description": "",
+            "description": "Aceita 201 (criada agora) ou 409 (já existia): assim a preparação pode rodar de novo no mesmo banco.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Node.js\",\n  \"category\": \"Backend\"\n}",
@@ -47,7 +185,21 @@
           }
         },
         {
-          "name": "Criar tecnologia - Express",
+          "name": "Cadastrar tecnologia - Express",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 (criada) ou 409 (já cadastrada)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('techExpressId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -66,7 +218,7 @@
                 "technologies"
               ]
             },
-            "description": "",
+            "description": "Aceita 201 (criada agora) ou 409 (já existia): assim a preparação pode rodar de novo no mesmo banco.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Express\",\n  \"category\": \"Framework\"\n}",
@@ -79,7 +231,21 @@
           }
         },
         {
-          "name": "Criar tecnologia - React",
+          "name": "Cadastrar tecnologia - React",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 (criada) ou 409 (já cadastrada)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('techReactId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -98,7 +264,7 @@
                 "technologies"
               ]
             },
-            "description": "",
+            "description": "Aceita 201 (criada agora) ou 409 (já existia): assim a preparação pode rodar de novo no mesmo banco.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"React\",\n  \"category\": \"Frontend\"\n}",
@@ -111,7 +277,21 @@
           }
         },
         {
-          "name": "Criar tecnologia - SQLite",
+          "name": "Cadastrar tecnologia - PostgreSQL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 (criada) ou 409 (já cadastrada)', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('techPostgresId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -130,10 +310,10 @@
                 "technologies"
               ]
             },
-            "description": "",
+            "description": "Aceita 201 (criada agora) ou 409 (já existia): assim a preparação pode rodar de novo no mesmo banco.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"SQLite\",\n  \"category\": \"Banco de dados\"\n}",
+              "raw": "{\n  \"name\": \"PostgreSQL\",\n  \"category\": \"Banco de dados\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -143,7 +323,25 @@
           }
         },
         {
-          "name": "Listar tecnologias",
+          "name": "Listar tecnologias (captura os ids)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const techs = pm.response.json();",
+                  "const ids = { techNodeId: 'node.js', techExpressId: 'express', techReactId: 'react', techPostgresId: 'postgresql' };",
+                  "Object.entries(ids).forEach(([varName, techName]) => {",
+                  "  const found = techs.find((t) => t.name.toLowerCase() === techName);",
+                  "  pm.test('Tecnologia ' + techName + ' cadastrada', () => pm.expect(found).to.be.an('object'));",
+                  "  if (found) pm.collectionVariables.set(varName, found.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -157,11 +355,36 @@
                 "technologies"
               ]
             },
-            "description": ""
+            "description": "Pega os ids pelo nome (sem diferenciar maiúsculas), inclusive das tecnologias que já existiam."
           }
         },
         {
-          "name": "ERRO 409 - tecnologia duplicada",
+          "name": "Cadastrar perfil - Rosimary (Mara)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// E-mail único a cada envio: dá para reenviar sem cair no 409 de e-mail repetido",
+                  "pm.collectionVariables.set('runId', Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const perfil = pm.response.json();",
+                  "pm.test('Perfil criado com id', () => pm.expect(perfil.id).to.be.a('number'));",
+                  "pm.collectionVariables.set('maraId', perfil.id);",
+                  "pm.collectionVariables.set('maraEmail', perfil.email);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -171,19 +394,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/technologies",
+              "raw": "{{baseUrl}}/api/profiles",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "technologies"
+                "profiles"
               ]
             },
-            "description": "Nome repetido (sem diferenciar maiúsculas)",
+            "description": "O e-mail leva um número único (runId) para não dar 409 quando a coleção roda de novo.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"node.js\"\n}",
+              "raw": "{\n  \"name\": \"Rosimary de Sousa Carvalho\",\n  \"email\": \"rosimary.{{runId}}@devshowcase.com\",\n  \"bio\": \"Desenvolvedora back-end, gosta de APIs e bancos de dados\",\n  \"githubUrl\": \"https://github.com/rosimary\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -193,7 +416,29 @@
           }
         },
         {
-          "name": "ERRO 400 - nome vazio",
+          "name": "Cadastrar perfil - Elda",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// E-mail único a cada envio: dá para reenviar sem cair no 409 de e-mail repetido",
+                  "pm.collectionVariables.set('runId', Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('eldaId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -203,19 +448,154 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/technologies",
+              "raw": "{{baseUrl}}/api/profiles",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "technologies"
+                "profiles"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"   \"\n}",
+              "raw": "{\n  \"name\": \"Elda de Sousa Carvalho\",\n  \"email\": \"elda.{{runId}}@devshowcase.com\",\n  \"bio\": \"Desenvolvedora front-end\",\n  \"githubUrl\": \"https://github.com/elda\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar projeto - Agenda de Consultas (Mara)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const projeto = pm.response.json();",
+                  "pm.test('Começa sem curtidas e sem média', () => {",
+                  "  pm.expect(projeto.upvotes).to.eql(0);",
+                  "  pm.expect(projeto.averageRating).to.eql(null);",
+                  "  pm.expect(projeto.totalFeedbacks).to.eql(0);",
+                  "});",
+                  "pm.test('Vinculado a 3 tecnologias', () => pm.expect(projeto.technologies).to.have.lengthOf(3));",
+                  "pm.collectionVariables.set('agendaId', projeto.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Agenda de Consultas\",\n  \"description\": \"Agendamento de consultas para clínicas pequenas, com lembrete por e-mail\",\n  \"repositoryUrl\": \"https://github.com/rosimary/agenda-consultas\",\n  \"demoUrl\": \"https://agenda-consultas.onrender.com\",\n  \"profileId\": {{maraId}},\n  \"technologyIds\": [\n    {{techNodeId}},\n    {{techExpressId}},\n    {{techPostgresId}}\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar projeto - Controle de Estoque (Elda)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('estoqueId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Controle de Estoque\",\n  \"description\": \"Entrada e saída de produtos com alerta de estoque baixo\",\n  \"repositoryUrl\": \"https://github.com/elda/controle-estoque\",\n  \"profileId\": {{eldaId}},\n  \"technologyIds\": [\n    {{techReactId}},\n    {{techNodeId}},\n    {{techPostgresId}}\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar projeto - Cardápio Digital (Elda)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('cardapioId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cardápio Digital\",\n  \"description\": \"Cardápio online para lanchonetes, com pedido pelo celular\",\n  \"repositoryUrl\": \"https://github.com/elda/cardapio-digital\",\n  \"demoUrl\": \"https://elda.github.io/cardapio-digital\",\n  \"profileId\": {{eldaId}},\n  \"technologyIds\": [\n    {{techReactId}}\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -227,144 +607,1216 @@
       ]
     },
     {
-      "name": "2. Perfis",
+      "name": "1. Listagem",
+      "description": "GET /api/projects com filtro por tecnologia (sem diferenciar maiúsculas) e paginação.",
       "item": [
         {
-          "name": "Criar perfil - Elda",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/profiles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "profiles"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Elda de Sousa Carvalho\",\n  \"email\": \"elda@devshowcase.com\",\n  \"bio\": \"Desenvolvedora back-end\",\n  \"githubUrl\": \"https://github.com/elda\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+          "name": "Listar projetos (padrão: página 1, 10 por página)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('Resposta com data e pagination', () => {",
+                  "  pm.expect(projetos).to.be.an('array');",
+                  "  pm.expect(pagination).to.include.keys('page', 'limit', 'totalItems', 'totalPages');",
+                  "});",
+                  "pm.test('Valores padrão page=1 e limit=10', () => {",
+                  "  pm.expect(pagination.page).to.eql(1);",
+                  "  pm.expect(pagination.limit).to.eql(10);",
+                  "  pm.expect(projetos.length).to.be.at.most(10);",
+                  "});",
+                  "pm.test('totalPages = teto(totalItems / limit)', () =>",
+                  "  pm.expect(pagination.totalPages).to.eql(Math.ceil(pagination.totalItems / pagination.limit)));",
+                  "pm.test('Projetos mais novos primeiro', () => {",
+                  "  const ids = projetos.map((p) => p.id);",
+                  "  pm.expect(ids).to.eql([...ids].sort((a, b) => b - a));",
+                  "});"
+                ]
               }
             }
-          }
-        },
-        {
-          "name": "Criar perfil - Wilque",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/profiles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "profiles"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Wilque Vito Ribeiro\",\n  \"email\": \"wilque@devshowcase.com\",\n  \"bio\": \"Desenvolvedor full stack\",\n  \"githubUrl\": \"https://github.com/wilque\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Criar perfil - Rosimary",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/profiles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "profiles"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Rosimary de Sousa Carvalho\",\n  \"email\": \"rosimary@devshowcase.com\",\n  \"bio\": \"Desenvolvedora front-end\",\n  \"githubUrl\": \"https://github.com/rosimary\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Buscar perfil por id (1)",
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/profiles/1",
+              "raw": "{{baseUrl}}/api/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar por tecnologia - react (minúsculas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos } = pm.response.json();",
+                  "const ids = projetos.map((p) => p.id);",
+                  "pm.test('Todos os projetos usam React', () =>",
+                  "  projetos.forEach((p) => pm.expect(p.technologies.map((t) => t.name.toLowerCase())).to.include('react')));",
+                  "pm.test('Traz Controle de Estoque e Cardápio Digital, mas não a Agenda', () => {",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('cardapioId')));",
+                  "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('agendaId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?technology=react",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "technology",
+                  "value": "react"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar por tecnologia - POSTGRESQL (maiúsculas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos } = pm.response.json();",
+                  "const ids = projetos.map((p) => p.id);",
+                  "pm.test('Todos os projetos usam PostgreSQL', () =>",
+                  "  projetos.forEach((p) => pm.expect(p.technologies.map((t) => t.name.toLowerCase())).to.include('postgresql')));",
+                  "pm.test('Traz Agenda de Consultas e Controle de Estoque, mas não o Cardápio', () => {",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('agendaId')));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
+                  "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('cardapioId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?technology=POSTGRESQL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "technology",
+                  "value": "POSTGRESQL"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Paginação - página 1 com 2 itens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('No máximo 2 itens', () => pm.expect(projetos.length).to.eql(Math.min(2, pagination.totalItems)));",
+                  "pm.test('totalPages calculado com limit=2', () =>",
+                  "  pm.expect(pagination.totalPages).to.eql(Math.ceil(pagination.totalItems / 2)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page=1&limit=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Paginação - página 2 com 2 itens",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consulta a página 1 logo antes do envio para saber em qual projeto ela terminou",
+                  "// (assim esta requisição funciona sozinha, mesmo reenviada depois de cadastrar mais projetos)",
+                  "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?page=1&limit=2'), (err, res) => {",
+                  "  if (err || res.code !== 200) return;",
+                  "  const { data } = res.json();",
+                  "  if (data.length) pm.collectionVariables.set('ultimoIdPagina1', data[data.length - 1].id);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('page = 2', () => pm.expect(pagination.page).to.eql(2));",
+                  "pm.test('Continua de onde a página 1 parou', () =>",
+                  "  projetos.forEach((p) => pm.expect(p.id).to.be.below(Number(pm.collectionVariables.get('ultimoIdPagina1')))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page=2&limit=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "2"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtro + paginação - node.js, 1 por página",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('Um item por página', () => pm.expect(projetos).to.have.lengthOf(1));",
+                  "pm.test('totalPages = totalItems quando limit = 1', () =>",
+                  "  pm.expect(pagination.totalPages).to.eql(pagination.totalItems));",
+                  "pm.test('Pelo menos 2 projetos com Node.js (Agenda e Estoque)', () =>",
+                  "  pm.expect(pagination.totalItems).to.be.at.least(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?technology=node.js&page=1&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "technology",
+                  "value": "node.js"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Página além do fim - lista vazia",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Calcula na hora a primeira página vazia (total de páginas com limit=2, mais 1), então funciona",
+                  "// mesmo reenviando só esta requisição. Valor padrão, se a variável estiver vazia: uma página bem alta",
+                  "if (!pm.collectionVariables.get('paginaAposFim')) pm.collectionVariables.set('paginaAposFim', 9999);",
+                  "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=2'), (err, res) => {",
+                  "  if (!err && res.code === 200) pm.collectionVariables.set('paginaAposFim', res.json().pagination.totalPages + 1);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('data vazio', () => pm.expect(projetos).to.eql([]));",
+                  "pm.test('page maior que totalPages', () => pm.expect(pagination.page).to.be.above(pagination.totalPages));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page={{paginaAposFim}}&limit=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{paginaAposFim}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Pede a página seguinte à última: responde 200 com data vazio."
+          }
+        },
+        {
+          "name": "Tecnologia sem projetos - lista vazia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const { data: projetos, pagination } = pm.response.json();",
+                  "pm.test('Nenhum projeto encontrado', () => {",
+                  "  pm.expect(projetos).to.eql([]);",
+                  "  pm.expect(pagination.totalItems).to.eql(0);",
+                  "  pm.expect(pagination.totalPages).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?technology=Cobol",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "technology",
+                  "value": "Cobol"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Upvote",
+      "description": "PUT /api/projects/{id}/upvote: incremento atômico no banco (upvotes = upvotes + 1). O script da pasta lê as curtidas atuais antes de cada envio e os testes conferem +1, então dá para reenviar sem zerar o banco.",
+      "item": [
+        {
+          "name": "Curtir projeto - Agenda de Consultas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const projeto = pm.response.json();",
+                  "pm.test('Retorna o projeto completo', () => {",
+                  "  pm.expect(projeto.id).to.eql(Number(pm.collectionVariables.get('agendaId')));",
+                  "  pm.expect(projeto).to.include.keys('title', 'owner', 'technologies', 'feedbacks', 'averageRating');",
+                  "});",
+                  "// upvotesAgenda foi lido pelo script da pasta logo antes do envio",
+                  "const antes = Number(pm.collectionVariables.get('upvotesAgenda'));",
+                  "pm.test('upvotes aumentou 1 (' + antes + ' → ' + (antes + 1) + ')', () => pm.expect(projeto.upvotes).to.eql(antes + 1));",
+                  "pm.collectionVariables.set('upvotesAgenda', projeto.upvotes);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/upvote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "upvote"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Curtir de novo - soma mais 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const antes = Number(pm.collectionVariables.get('upvotesAgenda'));",
+                  "pm.test('upvotes aumentou 1 (' + antes + ' → ' + (antes + 1) + ')', () =>",
+                  "  pm.expect(pm.response.json().upvotes).to.eql(antes + 1));",
+                  "pm.collectionVariables.set('upvotesAgenda', pm.response.json().upvotes);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/upvote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "upvote"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Curtir projeto - Controle de Estoque",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const antes = Number(pm.collectionVariables.get('upvotesEstoque'));",
+                  "pm.test('upvotes aumentou 1 (' + antes + ' → ' + (antes + 1) + ')', () =>",
+                  "  pm.expect(pm.response.json().upvotes).to.eql(antes + 1));",
+                  "pm.collectionVariables.set('upvotesEstoque', pm.response.json().upvotes);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{estoqueId}}/upvote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{estoqueId}}",
+                "upvote"
+              ]
+            }
+          }
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Antes de cada curtida, lê as curtidas atuais na listagem (a API não tem GET de um projeto só).",
+              "// Os testes conferem +1 em relação a esse valor, então dá para reenviar a requisição ou a pasta sem zerar o banco.",
+              "// Se agendaId/estoqueId estiverem vazios (pasta rodada sozinha), usa o projeto mais recente com o mesmo título.",
+              "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=50'), (err, res) => {",
+              "  if (err || res.code !== 200) return;",
+              "  const projetos = res.json().data;",
+              "  [",
+              "    ['agendaId', 'upvotesAgenda', 'Agenda de Consultas'],",
+              "    ['estoqueId', 'upvotesEstoque', 'Controle de Estoque'],",
+              "  ].forEach(([idVar, upvotesVar, title]) => {",
+              "    const id = Number(pm.collectionVariables.get(idVar));",
+              "    const projeto = projetos.find((p) => (id ? p.id === id : p.title === title));",
+              "    if (!projeto) return;",
+              "    pm.collectionVariables.set(idVar, projeto.id);",
+              "    pm.collectionVariables.set(upvotesVar, projeto.upvotes);",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Feedbacks",
+      "description": "POST /api/projects/{id}/feedbacks: nota 5 e depois nota 3 no mesmo projeto (com o banco zerado, média 5 e depois 4). O script da pasta lê a soma das notas e a quantidade de feedbacks antes de cada envio e os testes recalculam a média esperada, então dá para reenviar sem zerar o banco.",
+      "item": [
+        {
+          "name": "Feedback nota 5 - Agenda de Consultas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const { feedback, project } = pm.response.json();",
+                  "pm.test('Feedback salvo com nota 5', () => {",
+                  "  pm.expect(feedback.id).to.be.a('number');",
+                  "  pm.expect(feedback.rating).to.eql(5);",
+                  "  pm.expect(feedback.projectId).to.eql(Number(pm.collectionVariables.get('agendaId')));",
+                  "});",
+                  "// Soma das notas e quantidade de feedbacks de antes do envio (lidas pelo script da pasta)",
+                  "const soma = Number(pm.collectionVariables.get('somaNotasAntes')) + 5;",
+                  "const total = Number(pm.collectionVariables.get('feedbacksAntes')) + 1;",
+                  "const media = Math.round((soma * 100) / total) / 100;",
+                  "pm.test('Média = soma das notas / feedbacks = ' + soma + ' / ' + total + ' = ' + media, () => {",
+                  "  pm.expect(project.totalFeedbacks).to.eql(total);",
+                  "  pm.expect(project.averageRating).to.eql(media);",
+                  "});",
+                  "pm.collectionVariables.set('mediaAgenda', project.averageRating);",
+                  "pm.collectionVariables.set('totalFeedbacksAgenda', project.totalFeedbacks);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "feedbacks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Elda de Sousa Carvalho\",\n  \"comment\": \"Interface simples e o agendamento funciona muito bem.\",\n  \"rating\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Feedback nota 3 - mesma Agenda (recalcula a média)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const { feedback, project } = pm.response.json();",
+                  "pm.test('Feedback salvo com nota 3', () => pm.expect(feedback.rating).to.eql(3));",
+                  "// Soma das notas e quantidade de feedbacks de antes do envio (lidas pelo script da pasta)",
+                  "const soma = Number(pm.collectionVariables.get('somaNotasAntes')) + 3;",
+                  "const total = Number(pm.collectionVariables.get('feedbacksAntes')) + 1;",
+                  "const media = Math.round((soma * 100) / total) / 100;",
+                  "pm.test('Média = soma das notas / feedbacks = ' + soma + ' / ' + total + ' = ' + media, () => {",
+                  "  pm.expect(project.totalFeedbacks).to.eql(total);",
+                  "  pm.expect(project.averageRating).to.eql(media);",
+                  "});",
+                  "pm.collectionVariables.set('mediaAgenda', project.averageRating);",
+                  "pm.collectionVariables.set('totalFeedbacksAgenda', project.totalFeedbacks);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "feedbacks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Visitante\",\n  \"comment\": \"Faltou a opção de cancelar a consulta pelo celular.\",\n  \"rating\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Conferir média e curtidas na listagem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const agenda = pm.response.json().data.find((p) => p.id === Number(pm.collectionVariables.get('agendaId')));",
+                  "pm.test('Agenda de Consultas aparece na listagem', () => pm.expect(agenda).to.be.an('object'));",
+                  "pm.test('averageRating = soma das notas / quantidade de feedbacks', () => {",
+                  "  const soma = agenda.feedbacks.reduce((total, f) => total + f.rating, 0);",
+                  "  const total = agenda.feedbacks.length;",
+                  "  pm.expect(agenda.totalFeedbacks).to.eql(total);",
+                  "  pm.expect(agenda.averageRating).to.eql(total ? Math.round((soma * 100) / total) / 100 : null);",
+                  "});",
+                  "// Valores guardados pelas últimas respostas de curtida e de feedback",
+                  "pm.test('Mesma média, total de feedbacks e curtidas das últimas respostas', () => {",
+                  "  pm.expect(agenda.averageRating).to.eql(Number(pm.collectionVariables.get('mediaAgenda')));",
+                  "  pm.expect(agenda.totalFeedbacks).to.eql(Number(pm.collectionVariables.get('totalFeedbacksAgenda')));",
+                  "  pm.expect(agenda.upvotes).to.eql(Number(pm.collectionVariables.get('upvotesAgenda')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?technology=express&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "technology",
+                  "value": "express"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Antes de cada requisição, lê a Agenda de Consultas na listagem e guarda a soma das notas e a quantidade",
+              "// de feedbacks: os testes calculam a média esperada a partir disso, então dá para reenviar sem zerar o banco.",
+              "// Se agendaId estiver vazio (pasta rodada sozinha), usa a Agenda de Consultas mais recente.",
+              "const vazio = (nome) => [undefined, null, ''].includes(pm.collectionVariables.get(nome));",
+              "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=50'), (err, res) => {",
+              "  if (err || res.code !== 200) return;",
+              "  const id = Number(pm.collectionVariables.get('agendaId'));",
+              "  const agenda = res.json().data.find((p) => (id ? p.id === id : p.title === 'Agenda de Consultas'));",
+              "  if (!agenda) return;",
+              "  pm.collectionVariables.set('agendaId', agenda.id);",
+              "  pm.collectionVariables.set('somaNotasAntes', agenda.feedbacks.reduce((soma, f) => soma + f.rating, 0));",
+              "  pm.collectionVariables.set('feedbacksAntes', agenda.totalFeedbacks);",
+              "  // Valores padrão para a conferência na listagem, se ainda não houve curtida nem feedback",
+              "  if (vazio('upvotesAgenda')) pm.collectionVariables.set('upvotesAgenda', agenda.upvotes);",
+              "  if (vazio('mediaAgenda')) pm.collectionVariables.set('mediaAgenda', agenda.averageRating);",
+              "  if (vazio('totalFeedbacksAgenda')) pm.collectionVariables.set('totalFeedbacksAgenda', agenda.totalFeedbacks);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Erros",
+      "description": "Respostas do manipulador global de erros: sempre { status, error, message, details?, path, timestamp }.",
+      "item": [
+        {
+          "name": "400 - feedback com nota 6 e comentário vazio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Lista os campos com problema em details', () => {",
+                  "  const fields = body.details.map((d) => d.field);",
+                  "  pm.expect(fields).to.include('rating');",
+                  "  pm.expect(fields).to.include('comment');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "feedbacks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Visitante\",\n  \"comment\": \"\",\n  \"rating\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - JSON malformado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala do JSON inválido', () => pm.expect(pm.response.json().message).to.include('JSON inválido'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/{{agendaId}}/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "{{agendaId}}",
+                "feedbacks"
+              ]
+            },
+            "description": "Vírgula sobrando no final do JSON.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Visitante\",\n  \"rating\": 5,\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - id não numérico",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('details aponta o campo id', () => pm.expect(pm.response.json().details[0].field).to.eql('id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/abc/upvote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "abc",
+                "upvote"
+              ]
+            }
+          }
+        },
+        {
+          "name": "400 - página 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('details aponta o parâmetro page', () => pm.expect(pm.response.json().details[0].field).to.eql('page'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "400 - limit acima de 50",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('details aponta o parâmetro limit', () => pm.expect(pm.response.json().details[0].field).to.eql('limit'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "400 - page com texto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem pede número inteiro', () =>",
+                  "  pm.expect(pm.response.json().details[0].message).to.include('número inteiro'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects?page=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "abc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 - feedback em projeto inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Mensagem cita o projeto', () => pm.expect(pm.response.json().message).to.eql('Projeto 999999 não encontrado'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/999999/feedbacks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "999999",
+                "feedbacks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Visitante\",\n  \"comment\": \"Projeto que não existe\",\n  \"rating\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - upvote em projeto inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Mensagem cita o projeto', () => pm.expect(pm.response.json().message).to.eql('Projeto 999999 não encontrado'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projects/999999/upvote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projects",
+                "999999",
+                "upvote"
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 - rota inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Mesmo formato de erro', () => pm.expect(pm.response.json().message).to.include('/api/projetos'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/projetos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "projetos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Etapa 1",
+      "description": "Endpoints e validações da etapa 1 (perfis, tecnologias e cadastro de projetos).",
+      "item": [
+        {
+          "name": "Listar tecnologias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Lista com as tecnologias da preparação', () => {",
+                  "  const names = pm.response.json().map((t) => t.name.toLowerCase());",
+                  "  pm.expect(names).to.include.members(['node.js', 'express', 'react', 'postgresql']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/technologies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "technologies"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar perfil da Mara com projetos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const perfil = pm.response.json();",
+                  "pm.test('Perfil da Rosimary', () => pm.expect(perfil.name).to.eql('Rosimary de Sousa Carvalho'));",
+                  "pm.test('Traz a Agenda de Consultas', () =>",
+                  "  pm.expect(perfil.projects.map((p) => p.id)).to.include(Number(pm.collectionVariables.get('agendaId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/{{maraId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "profiles",
-                "1"
+                "{{maraId}}"
               ]
-            },
-            "description": ""
+            }
+          }
+        },
+        {
+          "name": "Buscar perfil da Elda com projetos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Traz Controle de Estoque e Cardápio Digital', () => {",
+                  "  const ids = pm.response.json().projects.map((p) => p.id);",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('cardapioId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/{{eldaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profiles",
+                "{{eldaId}}"
+              ]
+            }
           }
         },
         {
           "name": "ERRO 404 - perfil inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/profiles/999",
+              "raw": "{{baseUrl}}/api/profiles/999999",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "profiles",
-                "999"
+                "999999"
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "ERRO 400 - validações",
+          "name": "ERRO 400 - perfil com dados inválidos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Aponta name, email e githubUrl', () =>",
+                  "  pm.expect(pm.response.json().details.map((d) => d.field)).to.include.members(['name', 'email', 'githubUrl']));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -383,7 +1835,6 @@
                 "profiles"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"\",\n  \"email\": \"email-invalido\",\n  \"githubUrl\": \"github\"\n}",
@@ -397,6 +1848,17 @@
         },
         {
           "name": "ERRO 409 - e-mail repetido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -415,10 +1877,9 @@
                 "profiles"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Outra Pessoa\",\n  \"email\": \"elda@devshowcase.com\"\n}",
+              "raw": "{\n  \"name\": \"Outra Pessoa\",\n  \"email\": \"{{maraEmail}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -426,14 +1887,109 @@
               }
             }
           }
-        }
-      ]
-    },
-    {
-      "name": "3. Projetos",
-      "item": [
+        },
         {
-          "name": "Criar projeto - API de tarefas (Elda)",
+          "name": "ERRO 409 - tecnologia duplicada (node.js)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Mensagem de nome repetido', () =>",
+                  "  pm.expect(pm.response.json().message).to.eql('Já existe uma tecnologia com esse nome'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/technologies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "technologies"
+              ]
+            },
+            "description": "Nome repetido sem diferenciar maiúsculas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"node.js\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "ERRO 400 - tecnologia com nome vazio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/technologies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "technologies"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "ERRO 400 - projeto com título vazio e URL inválida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Aponta title e repositoryUrl', () =>",
+                  "  pm.expect(pm.response.json().details.map((d) => d.field)).to.include.members(['title', 'repositoryUrl']));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -452,10 +2008,9 @@
                 "projects"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"API de Tarefas\",\n  \"description\": \"API REST para gerenciar tarefas do dia a dia\",\n  \"repositoryUrl\": \"https://github.com/elda/api-tarefas\",\n  \"profileId\": 1,\n  \"technologyIds\": [\n    1,\n    2,\n    4\n  ]\n}",
+              "raw": "{\n  \"title\": \"  \",\n  \"repositoryUrl\": \"meu-repo\",\n  \"profileId\": {{maraId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -465,7 +2020,18 @@
           }
         },
         {
-          "name": "Criar projeto - Portfólio (Rosimary)",
+          "name": "ERRO 400 - projeto com tecnologia inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -484,10 +2050,9 @@
                 "projects"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Portfólio Pessoal\",\n  \"description\": \"Site com meus projetos e contato\",\n  \"repositoryUrl\": \"https://github.com/rosimary/portfolio\",\n  \"demoUrl\": \"https://rosimary.github.io/portfolio\",\n  \"profileId\": 3,\n  \"technologyIds\": [\n    3\n  ]\n}",
+              "raw": "{\n  \"title\": \"Projeto Teste\",\n  \"repositoryUrl\": \"https://github.com/rosimary/projeto-teste\",\n  \"profileId\": {{maraId}},\n  \"technologyIds\": [\n    999999\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -497,7 +2062,18 @@
           }
         },
         {
-          "name": "Criar projeto - Loja virtual (Wilque)",
+          "name": "ERRO 404 - projeto com perfil inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -516,143 +2092,9 @@
                 "projects"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Loja Virtual\",\n  \"description\": \"E-commerce simples com carrinho\",\n  \"repositoryUrl\": \"https://github.com/wilque/loja-virtual\",\n  \"profileId\": 2,\n  \"technologyIds\": [\n    1,\n    2,\n    3\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Listar projetos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "projects"
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Conferir perfil com projetos (1)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/profiles/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "profiles",
-                "1"
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "ERRO 400 - título vazio e URL inválida",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "projects"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"  \",\n  \"repositoryUrl\": \"meu-repo\",\n  \"profileId\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "ERRO 400 - tecnologia inexistente",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "projects"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Teste\",\n  \"repositoryUrl\": \"https://github.com/teste/x\",\n  \"profileId\": 1,\n  \"technologyIds\": [\n    99\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "ERRO 404 - perfil inexistente",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "projects"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Teste\",\n  \"repositoryUrl\": \"https://github.com/teste/x\",\n  \"profileId\": 999\n}",
+              "raw": "{\n  \"title\": \"Projeto Teste\",\n  \"repositoryUrl\": \"https://github.com/rosimary/projeto-teste\",\n  \"profileId\": 999999\n}",
               "options": {
                 "raw": {
                   "language": "json"

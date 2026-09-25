@@ -1,27 +1,23 @@
 const db = require('../database/connection');
 
-const insertStmt = db.prepare(`
-  INSERT INTO profiles (name, email, bio, github_url)
-  VALUES (@name, @email, @bio, @githubUrl)
-`);
-const findByIdStmt = db.prepare('SELECT * FROM profiles WHERE id = ?');
-const findByEmailStmt = db.prepare('SELECT * FROM profiles WHERE email = ?');
-
 module.exports = {
-  create(data) {
-    const { lastInsertRowid } = insertStmt.run({
-      bio: null,
-      githubUrl: null,
-      ...data,
-    });
-    return this.findById(lastInsertRowid);
+  async create(data, client = db) {
+    const { rows } = await client.query(
+      `INSERT INTO profiles (name, email, bio, github_url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [data.name, data.email, data.bio ?? null, data.githubUrl ?? null]
+    );
+    return rows[0];
   },
 
-  findById(id) {
-    return findByIdStmt.get(id);
+  async findById(id, client = db) {
+    const { rows } = await client.query('SELECT * FROM profiles WHERE id = $1', [id]);
+    return rows[0];
   },
 
-  findByEmail(email) {
-    return findByEmailStmt.get(email);
+  async findByEmail(email, client = db) {
+    const { rows } = await client.query('SELECT * FROM profiles WHERE LOWER(email) = LOWER($1)', [email]);
+    return rows[0];
   },
 };

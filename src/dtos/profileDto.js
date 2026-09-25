@@ -5,7 +5,7 @@ const CreateProfileInput = z
   .object({
     name: requiredText('name', 120),
     email: z
-      .string({ required_error: 'email é obrigatório' })
+      .string({ required_error: 'email é obrigatório', invalid_type_error: 'email deve ser texto' })
       .trim()
       .toLowerCase()
       .email('email deve ser um e-mail válido'),

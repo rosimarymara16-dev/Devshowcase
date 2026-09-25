@@ -1,21 +1,29 @@
 const db = require('../database/connection');
 
-const insertStmt = db.prepare(`
-  INSERT INTO feedbacks (project_id, author_name, comment, rating)
-  VALUES (@projectId, @authorName, @comment, @rating)
-`);
-const findByIdStmt = db.prepare('SELECT * FROM feedbacks WHERE id = ?');
-const findByProjectStmt = db.prepare('SELECT * FROM feedbacks WHERE project_id = ? ORDER BY id');
-
-// Na etapa 1 não há endpoint de feedback, mas o repositório já fica pronto
-// e os feedbacks aparecem na listagem de projetos.
 module.exports = {
-  create(data) {
-    const { lastInsertRowid } = insertStmt.run(data);
-    return findByIdStmt.get(lastInsertRowid);
+  async create(data, client = db) {
+    const { rows } = await client.query(
+      `INSERT INTO feedbacks (project_id, author_name, comment, rating)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [data.projectId, data.authorName, data.comment, data.rating]
+    );
+    return rows[0];
   },
 
-  findByProject(projectId) {
-    return findByProjectStmt.all(projectId);
+  async findByProject(projectId, client = db) {
+    const { rows } = await client.query('SELECT * FROM feedbacks WHERE project_id = $1 ORDER BY id', [projectId]);
+    return rows;
+  },
+
+  // Quantidade e soma das notas do projeto (usadas no cálculo da média)
+  async statsByProject(projectId, client = db) {
+    const { rows } = await client.query(
+      `SELECT COUNT(*)::int AS total, COALESCE(SUM(rating), 0)::int AS sum
+       FROM feedbacks
+       WHERE project_id = $1`,
+      [projectId]
+    );
+    return rows[0];
   },
 };

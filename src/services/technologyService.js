@@ -3,14 +3,14 @@ const HttpError = require('../middlewares/httpError');
 const { toTechnologyOutput } = require('../dtos/technologyDto');
 
 module.exports = {
-  create(input) {
-    if (technologyRepository.findByName(input.name)) {
-      throw HttpError.conflict(`A tecnologia "${input.name}" já está cadastrada`);
+  async create(input) {
+    if (await technologyRepository.findByName(input.name)) {
+      throw HttpError.conflict('Já existe uma tecnologia com esse nome');
     }
-    return toTechnologyOutput(technologyRepository.create(input));
+    return toTechnologyOutput(await technologyRepository.create(input));
   },
 
-  list() {
-    return technologyRepository.findAll().map(toTechnologyOutput);
+  async list() {
+    return (await technologyRepository.findAll()).map(toTechnologyOutput);
   },
 };

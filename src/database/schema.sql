@@ -1,27 +1,37 @@
 CREATE TABLE IF NOT EXISTS profiles (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  name        TEXT    NOT NULL,
-  email       TEXT    NOT NULL UNIQUE,
+  id          SERIAL       PRIMARY KEY,
+  name        VARCHAR(120) NOT NULL,
+  email       VARCHAR(254) NOT NULL,
   bio         TEXT,
   github_url  TEXT,
-  created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+
+-- E-mail único sem diferenciar maiúsculas/minúsculas
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_email_lower_key ON profiles (LOWER(email));
 
 CREATE TABLE IF NOT EXISTS technologies (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  name        TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-  category    TEXT
+  id        SERIAL      PRIMARY KEY,
+  name      VARCHAR(60) NOT NULL,
+  category  VARCHAR(60)
 );
 
+-- Nome de tecnologia único sem diferenciar maiúsculas/minúsculas
+CREATE UNIQUE INDEX IF NOT EXISTS technologies_name_lower_key ON technologies (LOWER(name));
+
 CREATE TABLE IF NOT EXISTS projects (
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  profile_id      INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  title           TEXT    NOT NULL,
+  id              SERIAL       PRIMARY KEY,
+  profile_id      INTEGER      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  title           VARCHAR(150) NOT NULL,
   description     TEXT,
-  repository_url  TEXT    NOT NULL,
+  repository_url  TEXT         NOT NULL,
   demo_url        TEXT,
-  created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+  upvotes         INTEGER      NOT NULL DEFAULT 0,
+  average_rating  NUMERIC(3,2),  -- fica NULL até o primeiro feedback
+  created_at      TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS projects_profile_id_idx ON projects (profile_id);
 
 -- Tabela de junção do relacionamento N:N entre Project e Technology
 CREATE TABLE IF NOT EXISTS project_technologies (
@@ -30,11 +40,15 @@ CREATE TABLE IF NOT EXISTS project_technologies (
   PRIMARY KEY (project_id, technology_id)
 );
 
+CREATE INDEX IF NOT EXISTS project_technologies_technology_id_idx ON project_technologies (technology_id);
+
 CREATE TABLE IF NOT EXISTS feedbacks (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  project_id   INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  author_name  TEXT    NOT NULL,
-  comment      TEXT    NOT NULL,
-  rating       INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+  id           SERIAL       PRIMARY KEY,
+  project_id   INTEGER      NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  author_name  VARCHAR(120) NOT NULL,
+  comment      VARCHAR(1000) NOT NULL,
+  rating       INTEGER      NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS feedbacks_project_id_idx ON feedbacks (project_id);

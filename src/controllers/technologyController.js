@@ -1,11 +1,11 @@
 const technologyService = require('../services/technologyService');
 
 module.exports = {
-  create(req, res) {
-    res.status(201).json(technologyService.create(req.body));
+  async create(req, res) {
+    res.status(201).json(await technologyService.create(req.body));
   },
 
-  index(_req, res) {
-    res.json(technologyService.list());
+  async index(_req, res) {
+    res.json(await technologyService.list());
   },
 };

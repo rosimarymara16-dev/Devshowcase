@@ -1,41 +1,44 @@
 const db = require('../database/connection');
 
-const insertStmt = db.prepare('INSERT INTO technologies (name, category) VALUES (@name, @category)');
-const findAllStmt = db.prepare('SELECT * FROM technologies ORDER BY name');
-const findByIdStmt = db.prepare('SELECT * FROM technologies WHERE id = ?');
-const findByNameStmt = db.prepare('SELECT * FROM technologies WHERE name = ?');
-const findByProjectStmt = db.prepare(`
-  SELECT t.* FROM technologies t
-  JOIN project_technologies pt ON pt.technology_id = t.id
-  WHERE pt.project_id = ?
-  ORDER BY t.name
-`);
-
 module.exports = {
-  create(data) {
-    const { lastInsertRowid } = insertStmt.run({ category: null, ...data });
-    return this.findById(lastInsertRowid);
+  async create(data, client = db) {
+    const { rows } = await client.query(
+      'INSERT INTO technologies (name, category) VALUES ($1, $2) RETURNING *',
+      [data.name, data.category ?? null]
+    );
+    return rows[0];
   },
 
-  findAll() {
-    return findAllStmt.all();
+  async findAll(client = db) {
+    const { rows } = await client.query('SELECT * FROM technologies ORDER BY name');
+    return rows;
   },
 
-  findById(id) {
-    return findByIdStmt.get(id);
+  async findById(id, client = db) {
+    const { rows } = await client.query('SELECT * FROM technologies WHERE id = $1', [id]);
+    return rows[0];
   },
 
-  findByName(name) {
-    return findByNameStmt.get(name);
+  // Nome comparado sem diferenciar maiúsculas/minúsculas
+  async findByName(name, client = db) {
+    const { rows } = await client.query('SELECT * FROM technologies WHERE LOWER(name) = LOWER($1)', [name]);
+    return rows[0];
   },
 
-  findByIds(ids) {
+  async findByIds(ids, client = db) {
     if (!ids.length) return [];
-    const placeholders = ids.map(() => '?').join(',');
-    return db.prepare(`SELECT * FROM technologies WHERE id IN (${placeholders})`).all(...ids);
+    const { rows } = await client.query('SELECT * FROM technologies WHERE id = ANY($1::int[])', [ids]);
+    return rows;
   },
 
-  findByProject(projectId) {
-    return findByProjectStmt.all(projectId);
+  async findByProject(projectId, client = db) {
+    const { rows } = await client.query(
+      `SELECT t.* FROM technologies t
+       JOIN project_technologies pt ON pt.technology_id = t.id
+       WHERE pt.project_id = $1
+       ORDER BY t.name`,
+      [projectId]
+    );
+    return rows;
   },
 };

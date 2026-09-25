@@ -1,3 +1,6 @@
-module.exports = (req, res) => {
-  res.status(404).json({ status: 404, error: `Rota ${req.method} ${req.originalUrl} não encontrada` });
+const HttpError = require('./httpError');
+
+// Rota inexistente: repassa para o errorHandler responder no formato padrão
+module.exports = (req, _res, next) => {
+  next(HttpError.notFound(`Rota ${req.method} ${req.originalUrl} não encontrada`));
 };

@@ -1,11 +1,16 @@
 const projectService = require('../services/projectService');
 
 module.exports = {
-  create(req, res) {
-    res.status(201).json(projectService.create(req.body));
+  async create(req, res) {
+    res.status(201).json(await projectService.create(req.body));
   },
 
-  index(_req, res) {
-    res.json(projectService.list());
+  // req.query já chega validado pelo validateQuery (page e limit como número)
+  async index(req, res) {
+    res.json(await projectService.list(req.query));
+  },
+
+  async upvote(req, res) {
+    res.json(await projectService.upvote(Number(req.params.id)));
   },
 };
