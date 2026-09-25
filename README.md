@@ -6,9 +6,11 @@ Esta é a versão final (etapa 2): endpoints de feedback, upvote e listagem com 
 
 **Integrantes:** Rosimary de Sousa Carvalho (Mara) · Elda de Sousa Carvalho
 
-**API em produção:** `https://SEU-SERVICO.onrender.com` _(preencher depois do deploy)_
+**API em produção:** https://devshowcase-darx.onrender.com
 
-**Swagger em produção:** `https://SEU-SERVICO.onrender.com/docs`
+**Swagger em produção:** https://devshowcase-darx.onrender.com/docs
+
+A API está no plano Free do Render: se ficar 15 minutos sem uso ela "dorme", e a primeira requisição depois disso demora cerca de 1 minuto.
 
 ## Tecnologias
 
@@ -289,7 +291,7 @@ Exemplo de `404`:
 
 ## Postman
 
-Importe `postman/DevShowcase-Grupo2.postman_collection.json`. A URL fica na variável da coleção `baseUrl` (padrão `http://localhost:3000`); para gravar o vídeo em produção, troque o valor para a URL do Render.
+Importe `postman/DevShowcase-Grupo2.postman_collection.json`. A URL fica na variável da coleção `baseUrl` (padrão `http://localhost:3000`); para testar em produção, troque o valor para `https://devshowcase-darx.onrender.com`.
 
 As pastas estão na ordem da apresentação:
 
@@ -317,12 +319,12 @@ O que a coleção não resolve sozinha: a pasta **0. Preparação** precisa ter 
 1. Com o código no GitHub, entre em [render.com](https://render.com) e faça login com a conta do GitHub.
 2. **Banco:** clique em **New → Postgres**.
    - Name: `devshowcase-db`
-   - Region: escolha uma (ex.: Ohio) e use a **mesma** no Web Service
+   - Region: **Oregon** (a **mesma** do Web Service)
    - Plan: **Free**
    - Clique em **Create Database** e, quando ficar disponível, copie a **Internal Database URL**.
 3. **API:** clique em **New → Web Service** e selecione este repositório.
-   - Name: `devshowcase-api-grupo2`
-   - Region: a mesma do banco
+   - Name: `Devshowcase`
+   - Region: Oregon, a mesma do banco
    - Branch: `main`
    - Runtime: **Node**
    - Build Command: `npm install`
@@ -331,7 +333,7 @@ O que a coleção não resolve sozinha: a pasta **0. Preparação** precisa ter 
 4. Em **Environment Variables**, adicione `DATABASE_URL` com a **Internal Database URL** copiada no passo 2. Não precisa definir `PORT` (o Render define sozinho) nem `DATABASE_SSL` (a URL interna não usa SSL).
 5. Em **Advanced**, deixe **Auto-Deploy** como **On Commit**: todo push na branch `main` gera um deploy novo.
 6. Clique em **Create Web Service** e acompanhe os logs até aparecer `DevShowcase API rodando...`. As tabelas são criadas automaticamente nessa primeira subida.
-7. Teste `https://SEU-SERVICO.onrender.com/health` e `https://SEU-SERVICO.onrender.com/docs`, troque a `baseUrl` do Postman e rode a coleção.
+7. Teste https://devshowcase-darx.onrender.com/health e https://devshowcase-darx.onrender.com/docs, troque a `baseUrl` do Postman e rode a coleção.
 
 Observações:
 
