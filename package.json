@@ -1,0 +1,20 @@
+{
+  "name": "devshowcase-api",
+  "version": "1.0.0",
+  "description": "DevShowcase API - vitrine de projetos de desenvolvedores (Node.js + Express + SQLite via sql.js)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Grupo 2 - Elda de Sousa Carvalho, Wilque Vito Ribeiro, Rosimary de Sousa Carvalho",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.3",
+    "sql.js": "^1.14.2",
+    "zod": "^3.25.76"
+  }
+}
