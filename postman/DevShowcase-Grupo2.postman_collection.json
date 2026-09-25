@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "DevShowcase API - Grupo 2",
-    "description": "Roteiro de demonstração da etapa 2 (rode as pastas em ordem ou use o Runner na coleção inteira).\n\n- Troque a variável da coleção `baseUrl` para a URL do Render na hora do vídeo (padrão: http://localhost:3000).\n- A pasta \"0. Preparação\" popula o banco e guarda os ids em variáveis; pode rodar de novo sem zerar o banco.\n- Todas as requisições têm testes do status esperado.\n- Curtidas, médias e paginação são conferidas em relação ao que a API tinha logo antes do envio, então dá para reenviar qualquer requisição (ou rodar de novo só uma pasta) sem zerar o banco.",
+    "description": "Roteiro de demonstração da etapa 2 (rode as pastas em ordem ou use o Runner na coleção inteira).\n\n- Troque a variável da coleção `baseUrl` para a URL do Render na hora do vídeo (padrão: http://localhost:3000).\n- A pasta \"0. Preparação\" popula o banco e guarda os ids em variáveis. Ela precisa ter rodado pelo menos uma vez no banco usado e pode rodar de novo sem zerar o banco. Depois de zerar o banco ou trocar a `baseUrl` para outro servidor, rode a pasta 0 antes das outras (os ids guardados deixam de existir).\n- Toda requisição tem `pm.test` do status esperado; as respostas de erro também conferem o formato padrão.\n- Curtidas, médias, a página 2 e a página além do fim são conferidas em relação ao que a API tinha logo antes do envio, então dá para reenviar uma requisição ou rodar de novo uma pasta sem zerar o banco.\n- Pasta rodada sozinha com as variáveis vazias: os projetos da preparação são procurados pelo título na listagem e os perfis da pasta 5 pelo dono desses projetos.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -102,12 +102,16 @@
     {
       "key": "totalFeedbacksAgenda",
       "value": ""
+    },
+    {
+      "key": "agendaDosValores",
+      "value": ""
     }
   ],
   "item": [
     {
       "name": "0. Preparação",
-      "description": "Popula um banco vazio (ou já usado) com tecnologias, perfis e projetos e guarda os ids em variáveis da coleção. Pode rodar quantas vezes quiser. Se reenviar só o cadastro de um perfil, reenvie também os projetos dele (o perfil novo começa sem projetos).",
+      "description": "Popula um banco vazio (ou já usado) com tecnologias, perfis e projetos e guarda os ids em variáveis da coleção. Pode rodar quantas vezes quiser. Reenviar só o cadastro de um perfil limpa as variáveis dos projetos dele (o perfil novo começa sem projetos); reenvie também os cadastros de projeto se quiser o perfil novo com projetos.",
       "item": [
         {
           "name": "Verificar se a API está no ar (health)",
@@ -380,7 +384,9 @@
                   "const perfil = pm.response.json();",
                   "pm.test('Perfil criado com id', () => pm.expect(perfil.id).to.be.a('number'));",
                   "pm.collectionVariables.set('maraId', perfil.id);",
-                  "pm.collectionVariables.set('maraEmail', perfil.email);"
+                  "pm.collectionVariables.set('maraEmail', perfil.email);",
+                  "// Perfil novo começa sem projetos: a Agenda guardada era do perfil anterior",
+                  "pm.collectionVariables.set('agendaId', '');"
                 ]
               }
             }
@@ -403,7 +409,7 @@
                 "profiles"
               ]
             },
-            "description": "O e-mail leva um número único (runId) para não dar 409 quando a coleção roda de novo.",
+            "description": "O e-mail leva um número único (runId) para não dar 409 quando a coleção roda de novo. Como o perfil novo começa sem projetos, o teste limpa agendaId até a Agenda ser cadastrada de novo.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Rosimary de Sousa Carvalho\",\n  \"email\": \"rosimary.{{runId}}@devshowcase.com\",\n  \"bio\": \"Desenvolvedora back-end, gosta de APIs e bancos de dados\",\n  \"githubUrl\": \"https://github.com/rosimary\"\n}",
@@ -434,7 +440,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set('eldaId', pm.response.json().id);"
+                  "pm.collectionVariables.set('eldaId', pm.response.json().id);",
+                  "// Perfil novo começa sem projetos: o Estoque e o Cardápio guardados eram do perfil anterior",
+                  "pm.collectionVariables.set('estoqueId', '');",
+                  "pm.collectionVariables.set('cardapioId', '');"
                 ]
               }
             }
@@ -465,7 +474,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "Como o perfil novo começa sem projetos, o teste limpa estoqueId e cardapioId até os projetos serem cadastrados de novo."
           }
         },
         {
@@ -484,7 +494,12 @@
                   "  pm.expect(projeto.totalFeedbacks).to.eql(0);",
                   "});",
                   "pm.test('Vinculado a 3 tecnologias', () => pm.expect(projeto.technologies).to.have.lengthOf(3));",
-                  "pm.collectionVariables.set('agendaId', projeto.id);"
+                  "pm.collectionVariables.set('agendaId', projeto.id);",
+                  "// Agenda nova: os valores que a pasta 3 confere na listagem recomeçam (média vazia = ainda sem feedback)",
+                  "pm.collectionVariables.set('upvotesAgenda', projeto.upvotes);",
+                  "pm.collectionVariables.set('mediaAgenda', projeto.averageRating ?? '');",
+                  "pm.collectionVariables.set('totalFeedbacksAgenda', projeto.totalFeedbacks);",
+                  "pm.collectionVariables.set('agendaDosValores', projeto.id);"
                 ]
               }
             }
@@ -664,13 +679,15 @@
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const { data: projetos } = pm.response.json();",
-                  "const ids = projetos.map((p) => p.id);",
                   "pm.test('Todos os projetos usam React', () =>",
                   "  projetos.forEach((p) => pm.expect(p.technologies.map((t) => t.name.toLowerCase())).to.include('react')));",
+                  "// Id guardado na preparação; com a variável vazia (pasta rodada sozinha), procura pelo título na própria resposta",
+                  "const idOuTitulo = (variavel, titulo) => Number(pm.collectionVariables.get(variavel)) || titulo;",
+                  "const idsETitulos = projetos.flatMap((p) => [p.id, p.title]);",
                   "pm.test('Traz Controle de Estoque e Cardápio Digital, mas não a Agenda', () => {",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('cardapioId')));",
-                  "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('agendaId')));",
+                  "  pm.expect(idsETitulos).to.include(idOuTitulo('estoqueId', 'Controle de Estoque'));",
+                  "  pm.expect(idsETitulos).to.include(idOuTitulo('cardapioId', 'Cardápio Digital'));",
+                  "  pm.expect(projetos.map((p) => p.title)).to.not.include('Agenda de Consultas');",
                   "});"
                 ]
               }
@@ -707,13 +724,15 @@
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const { data: projetos } = pm.response.json();",
-                  "const ids = projetos.map((p) => p.id);",
                   "pm.test('Todos os projetos usam PostgreSQL', () =>",
                   "  projetos.forEach((p) => pm.expect(p.technologies.map((t) => t.name.toLowerCase())).to.include('postgresql')));",
+                  "// Id guardado na preparação; com a variável vazia (pasta rodada sozinha), procura pelo título na própria resposta",
+                  "const idOuTitulo = (variavel, titulo) => Number(pm.collectionVariables.get(variavel)) || titulo;",
+                  "const idsETitulos = projetos.flatMap((p) => [p.id, p.title]);",
                   "pm.test('Traz Agenda de Consultas e Controle de Estoque, mas não o Cardápio', () => {",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('agendaId')));",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
-                  "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('cardapioId')));",
+                  "  pm.expect(idsETitulos).to.include(idOuTitulo('agendaId', 'Agenda de Consultas'));",
+                  "  pm.expect(idsETitulos).to.include(idOuTitulo('estoqueId', 'Controle de Estoque'));",
+                  "  pm.expect(projetos.map((p) => p.title)).to.not.include('Cardápio Digital');",
                   "});"
                 ]
               }
@@ -987,7 +1006,7 @@
     },
     {
       "name": "2. Upvote",
-      "description": "PUT /api/projects/{id}/upvote: incremento atômico no banco (upvotes = upvotes + 1). O script da pasta lê as curtidas atuais antes de cada envio e os testes conferem +1, então dá para reenviar sem zerar o banco.",
+      "description": "PUT /api/projects/{id}/upvote: incremento atômico no banco (upvotes = upvotes + 1). O script da pasta lê as curtidas atuais antes de cada envio e os testes conferem +1, então dá para reenviar sem zerar o banco. Com agendaId/estoqueId vazios, usa o projeto mais recente com o mesmo título.",
       "item": [
         {
           "name": "Curtir projeto - Agenda de Consultas",
@@ -1000,7 +1019,7 @@
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const projeto = pm.response.json();",
                   "pm.test('Retorna o projeto completo', () => {",
-                  "  pm.expect(projeto.id).to.eql(Number(pm.collectionVariables.get('agendaId')));",
+                  "  pm.expect(projeto.id).to.eql(Number(pm.variables.get('agendaId')));",
                   "  pm.expect(projeto).to.include.keys('title', 'owner', 'technologies', 'feedbacks', 'averageRating');",
                   "});",
                   "// upvotesAgenda foi lido pelo script da pasta logo antes do envio",
@@ -1105,7 +1124,9 @@
             "exec": [
               "// Antes de cada curtida, lê as curtidas atuais na listagem (a API não tem GET de um projeto só).",
               "// Os testes conferem +1 em relação a esse valor, então dá para reenviar a requisição ou a pasta sem zerar o banco.",
-              "// Se agendaId/estoqueId estiverem vazios (pasta rodada sozinha), usa o projeto mais recente com o mesmo título.",
+              "// Se agendaId/estoqueId estiverem vazios (pasta rodada sozinha), usa o projeto mais recente com o mesmo título",
+              "// só nesta execução (variável local): as variáveis da coleção guardam só os projetos cadastrados para os",
+              "// perfis atuais, que a pasta 5 confere.",
               "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=50'), (err, res) => {",
               "  if (err || res.code !== 200) return;",
               "  const projetos = res.json().data;",
@@ -1113,11 +1134,17 @@
               "    ['agendaId', 'upvotesAgenda', 'Agenda de Consultas'],",
               "    ['estoqueId', 'upvotesEstoque', 'Controle de Estoque'],",
               "  ].forEach(([idVar, upvotesVar, title]) => {",
-              "    const id = Number(pm.collectionVariables.get(idVar));",
+              "    const id = Number(pm.variables.get(idVar));",
               "    const projeto = projetos.find((p) => (id ? p.id === id : p.title === title));",
               "    if (!projeto) return;",
-              "    pm.collectionVariables.set(idVar, projeto.id);",
+              "    if (!id) pm.variables.set(idVar, projeto.id);",
               "    pm.collectionVariables.set(upvotesVar, projeto.upvotes);",
+              "    // Média e feedbacks guardados para a pasta 3 eram de outra Agenda: relê desta",
+              "    if (idVar === 'agendaId' && Number(pm.collectionVariables.get('agendaDosValores')) !== projeto.id) {",
+              "      pm.collectionVariables.set('mediaAgenda', projeto.averageRating ?? '');",
+              "      pm.collectionVariables.set('totalFeedbacksAgenda', projeto.totalFeedbacks);",
+              "      pm.collectionVariables.set('agendaDosValores', projeto.id);",
+              "    }",
               "  });",
               "});"
             ]
@@ -1127,7 +1154,7 @@
     },
     {
       "name": "3. Feedbacks",
-      "description": "POST /api/projects/{id}/feedbacks: nota 5 e depois nota 3 no mesmo projeto (com o banco zerado, média 5 e depois 4). O script da pasta lê a soma das notas e a quantidade de feedbacks antes de cada envio e os testes recalculam a média esperada, então dá para reenviar sem zerar o banco.",
+      "description": "POST /api/projects/{id}/feedbacks: nota 5 e depois nota 3 no mesmo projeto (com o banco zerado, média 5 e depois 4). O script da pasta lê a soma das notas e a quantidade de feedbacks antes de cada envio e os testes recalculam a média esperada, então dá para reenviar sem zerar o banco. A última requisição confere na listagem a média, o total de feedbacks e as curtidas guardados pelas respostas anteriores.",
       "item": [
         {
           "name": "Feedback nota 5 - Agenda de Consultas",
@@ -1142,7 +1169,7 @@
                   "pm.test('Feedback salvo com nota 5', () => {",
                   "  pm.expect(feedback.id).to.be.a('number');",
                   "  pm.expect(feedback.rating).to.eql(5);",
-                  "  pm.expect(feedback.projectId).to.eql(Number(pm.collectionVariables.get('agendaId')));",
+                  "  pm.expect(feedback.projectId).to.eql(Number(pm.variables.get('agendaId')));",
                   "});",
                   "// Soma das notas e quantidade de feedbacks de antes do envio (lidas pelo script da pasta)",
                   "const soma = Number(pm.collectionVariables.get('somaNotasAntes')) + 5;",
@@ -1254,7 +1281,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "const agenda = pm.response.json().data.find((p) => p.id === Number(pm.collectionVariables.get('agendaId')));",
+                  "const agenda = pm.response.json().data.find((p) => p.id === Number(pm.variables.get('agendaId')));",
                   "pm.test('Agenda de Consultas aparece na listagem', () => pm.expect(agenda).to.be.an('object'));",
                   "pm.test('averageRating = soma das notas / quantidade de feedbacks', () => {",
                   "  const soma = agenda.feedbacks.reduce((total, f) => total + f.rating, 0);",
@@ -1262,11 +1289,16 @@
                   "  pm.expect(agenda.totalFeedbacks).to.eql(total);",
                   "  pm.expect(agenda.averageRating).to.eql(total ? Math.round((soma * 100) / total) / 100 : null);",
                   "});",
-                  "// Valores guardados pelas últimas respostas de curtida e de feedback",
+                  "// Valores guardados pelas últimas respostas de curtida e de feedback. Média vazia = Agenda ainda sem",
+                  "// feedback, e a API devolve null nesse caso (Number('') daria 0)",
+                  "const guardado = (nome) => {",
+                  "  const valor = pm.collectionVariables.get(nome);",
+                  "  return [undefined, null, '', 'null'].includes(valor) ? null : Number(valor);",
+                  "};",
                   "pm.test('Mesma média, total de feedbacks e curtidas das últimas respostas', () => {",
-                  "  pm.expect(agenda.averageRating).to.eql(Number(pm.collectionVariables.get('mediaAgenda')));",
-                  "  pm.expect(agenda.totalFeedbacks).to.eql(Number(pm.collectionVariables.get('totalFeedbacksAgenda')));",
-                  "  pm.expect(agenda.upvotes).to.eql(Number(pm.collectionVariables.get('upvotesAgenda')));",
+                  "  pm.expect(agenda.averageRating).to.eql(guardado('mediaAgenda'));",
+                  "  pm.expect(agenda.totalFeedbacks).to.eql(guardado('totalFeedbacksAgenda'));",
+                  "  pm.expect(agenda.upvotes).to.eql(guardado('upvotesAgenda'));",
                   "});"
                 ]
               }
@@ -1306,20 +1338,24 @@
             "exec": [
               "// Antes de cada requisição, lê a Agenda de Consultas na listagem e guarda a soma das notas e a quantidade",
               "// de feedbacks: os testes calculam a média esperada a partir disso, então dá para reenviar sem zerar o banco.",
-              "// Se agendaId estiver vazio (pasta rodada sozinha), usa a Agenda de Consultas mais recente.",
-              "const vazio = (nome) => [undefined, null, ''].includes(pm.collectionVariables.get(nome));",
+              "// Se agendaId estiver vazio (pasta rodada sozinha), usa a Agenda de Consultas mais recente só nesta execução",
+              "// (variável local), como na pasta 2.",
               "pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=50'), (err, res) => {",
               "  if (err || res.code !== 200) return;",
-              "  const id = Number(pm.collectionVariables.get('agendaId'));",
+              "  const id = Number(pm.variables.get('agendaId'));",
               "  const agenda = res.json().data.find((p) => (id ? p.id === id : p.title === 'Agenda de Consultas'));",
               "  if (!agenda) return;",
-              "  pm.collectionVariables.set('agendaId', agenda.id);",
+              "  if (!id) pm.variables.set('agendaId', agenda.id);",
               "  pm.collectionVariables.set('somaNotasAntes', agenda.feedbacks.reduce((soma, f) => soma + f.rating, 0));",
               "  pm.collectionVariables.set('feedbacksAntes', agenda.totalFeedbacks);",
-              "  // Valores padrão para a conferência na listagem, se ainda não houve curtida nem feedback",
-              "  if (vazio('upvotesAgenda')) pm.collectionVariables.set('upvotesAgenda', agenda.upvotes);",
-              "  if (vazio('mediaAgenda')) pm.collectionVariables.set('mediaAgenda', agenda.averageRating);",
-              "  if (vazio('totalFeedbacksAgenda')) pm.collectionVariables.set('totalFeedbacksAgenda', agenda.totalFeedbacks);",
+              "  // Curtidas, média e total que a última requisição confere: se os guardados são de outra Agenda",
+              "  // (ou ainda não existem), parte dos valores atuais desta",
+              "  if (Number(pm.collectionVariables.get('agendaDosValores')) !== agenda.id) {",
+              "    pm.collectionVariables.set('upvotesAgenda', agenda.upvotes);",
+              "    pm.collectionVariables.set('mediaAgenda', agenda.averageRating ?? '');",
+              "    pm.collectionVariables.set('totalFeedbacksAgenda', agenda.totalFeedbacks);",
+              "    pm.collectionVariables.set('agendaDosValores', agenda.id);",
+              "  }",
               "});"
             ]
           }
@@ -1328,7 +1364,7 @@
     },
     {
       "name": "4. Erros",
-      "description": "Respostas do manipulador global de erros: sempre { status, error, message, details?, path, timestamp }.",
+      "description": "Respostas do manipulador global de erros: sempre { status, error, message, details?, path, timestamp }. Com agendaId vazio (pasta rodada sozinha), os dois 400 de feedback usam o id 1: o corpo é validado antes da busca do projeto.",
       "item": [
         {
           "name": "400 - feedback com nota 6 e comentário vazio",
@@ -1668,11 +1704,24 @@
             }
           }
         }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Os dois primeiros 400 usam {{agendaId}} na URL. Com a variável vazia (pasta rodada sozinha), usa o id 1",
+              "// só nesta execução: o corpo é validado antes de a API procurar o projeto, então a resposta continua 400",
+              "if (!pm.variables.get('agendaId')) pm.variables.set('agendaId', 1);"
+            ]
+          }
+        }
       ]
     },
     {
       "name": "5. Etapa 1",
-      "description": "Endpoints e validações da etapa 1 (perfis, tecnologias e cadastro de projetos).",
+      "description": "Endpoints e validações da etapa 1 (perfis, tecnologias e cadastro de projetos). Com maraId/eldaId vazios (pasta rodada sozinha), o script da pasta usa os donos da Agenda de Consultas e do Controle de Estoque mais recentes.",
       "item": [
         {
           "name": "Listar tecnologias",
@@ -1717,8 +1766,12 @@
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const perfil = pm.response.json();",
                   "pm.test('Perfil da Rosimary', () => pm.expect(perfil.name).to.eql('Rosimary de Sousa Carvalho'));",
-                  "pm.test('Traz a Agenda de Consultas', () =>",
-                  "  pm.expect(perfil.projects.map((p) => p.id)).to.include(Number(pm.collectionVariables.get('agendaId'))));"
+                  "// Só exige a Agenda se ela foi cadastrada para este perfil (cadastrar o perfil de novo limpa agendaId)",
+                  "const agendaId = Number(pm.collectionVariables.get('agendaId'));",
+                  "pm.test(agendaId ? 'Traz a Agenda de Consultas' : 'Traz a lista de projetos do perfil', () => {",
+                  "  pm.expect(perfil.projects).to.be.an('array');",
+                  "  if (agendaId) pm.expect(perfil.projects.map((p) => p.id)).to.include(agendaId);",
+                  "});"
                 ]
               }
             }
@@ -1748,10 +1801,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Traz Controle de Estoque e Cardápio Digital', () => {",
-                  "  const ids = pm.response.json().projects.map((p) => p.id);",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('estoqueId')));",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('cardapioId')));",
+                  "const perfil = pm.response.json();",
+                  "// Só exige os projetos guardados para este perfil (cadastrar o perfil de novo limpa estoqueId e cardapioId)",
+                  "const guardados = [['estoqueId', 'Controle de Estoque'], ['cardapioId', 'Cardápio Digital']]",
+                  "  .map(([variavel, titulo]) => [Number(pm.collectionVariables.get(variavel)), titulo])",
+                  "  .filter(([id]) => id);",
+                  "const nomeTeste = guardados.length ? 'Traz ' + guardados.map(([, titulo]) => titulo).join(' e ') : 'Traz a lista de projetos do perfil';",
+                  "pm.test(nomeTeste, () => {",
+                  "  pm.expect(perfil.projects).to.be.an('array');",
+                  "  guardados.forEach(([id]) => pm.expect(perfil.projects.map((p) => p.id)).to.include(id));",
                   "});"
                 ]
               }
@@ -1850,6 +1908,20 @@
           "name": "ERRO 409 - e-mail repetido",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Com maraEmail vazio (pasta rodada sozinha), lê o e-mail do perfil que o script da pasta encontrou",
+                  "if (!pm.collectionVariables.get('maraEmail') && pm.collectionVariables.get('maraId')) {",
+                  "  pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/profiles/{{maraId}}'), (err, res) => {",
+                  "    if (!err && res.code === 200) pm.collectionVariables.set('maraEmail', res.json().email);",
+                  "  });",
+                  "}"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -1885,7 +1957,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "Reusa o e-mail do perfil da Mara. Com maraEmail vazio (pasta rodada sozinha), o script lê o e-mail do perfil guardado em maraId."
           }
         },
         {
@@ -1985,7 +2058,7 @@
                 "exec": [
                   "pm.test('Status 400', () => pm.response.to.have.status(400));",
                   "pm.test('Aponta title e repositoryUrl', () =>",
-                  "  pm.expect(pm.response.json().details.map((d) => d.field)).to.include.members(['title', 'repositoryUrl']));"
+                  "  pm.expect((pm.response.json().details || []).map((d) => d.field)).to.include.members(['title', 'repositoryUrl']));"
                 ]
               }
             }
@@ -2101,6 +2174,35 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Pasta rodada sozinha com as variáveis vazias: descobre os perfis da preparação pelo dono dos projetos",
+              "// (Agenda de Consultas é da Mara, Controle de Estoque é da Elda). Usa o id guardado do projeto, se houver,",
+              "// senão o mais recente com o título",
+              "const vazio = (nome) => [undefined, null, ''].includes(pm.collectionVariables.get(nome));",
+              "if (vazio('maraId') || vazio('eldaId')) {",
+              "  pm.sendRequest(pm.variables.replaceIn('{{baseUrl}}/api/projects?limit=50'), (err, res) => {",
+              "    if (err || res.code !== 200) return;",
+              "    const projetos = res.json().data;",
+              "    [",
+              "      ['maraId', 'agendaId', 'Agenda de Consultas'],",
+              "      ['eldaId', 'estoqueId', 'Controle de Estoque'],",
+              "    ].forEach(([perfilVar, projetoVar, titulo]) => {",
+              "      if (!vazio(perfilVar)) return;",
+              "      const id = Number(pm.collectionVariables.get(projetoVar));",
+              "      const projeto = projetos.find((p) => (id ? p.id === id : p.title === titulo));",
+              "      if (projeto) pm.collectionVariables.set(perfilVar, projeto.owner.id);",
+              "    });",
+              "  });",
+              "}"
+            ]
           }
         }
       ]

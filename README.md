@@ -296,13 +296,21 @@ As pastas estão na ordem da apresentação:
 1. **0. Preparação** – cadastra tecnologias, os perfis da Mara e da Elda e os projetos, guardando os ids em variáveis (pode rodar de novo no mesmo banco: tecnologia repetida aceita 201 ou 409 e os e-mails levam um número único)
 2. **1. Listagem** – filtro por tecnologia (maiúsculas e minúsculas), paginação e página além do fim
 3. **2. Upvote** – curtidas no projeto (o teste confere +1 em relação às curtidas lidas logo antes do envio)
-4. **3. Feedbacks** – nota 5 e depois nota 3 no mesmo projeto (com o banco zerado, média 5 e depois 4); o teste recalcula a média esperada a partir da soma das notas e da quantidade de feedbacks de antes do envio
+4. **3. Feedbacks** – nota 5 e depois nota 3 no mesmo projeto (com o banco zerado, média 5 e depois 4); o teste recalcula a média esperada a partir da soma das notas e da quantidade de feedbacks de antes do envio, e a última requisição confere na listagem a média, o total de feedbacks e as curtidas
 5. **4. Erros** – 400 de validação, JSON malformado, id e query inválidos; 404 de projeto e de rota inexistente
 6. **5. Etapa 1** – endpoints e validações da etapa 1
 
-Todas as requisições têm testes do status esperado, então dá para rodar a coleção inteira pelo Runner.
+Toda requisição tem `pm.test` conferindo o status esperado, e as respostas de erro também conferem o formato padrão (`status`, `error`, `message`, `path`, `timestamp`). A coleção inteira roda pelo Runner.
 
-Os testes de curtidas, médias e paginação são relativos: antes do envio, um script consulta a API com `pm.sendRequest` e guarda o valor atual em uma variável, e o teste compara com ele. Assim dá para reenviar qualquer requisição ou rodar de novo só uma pasta (por exemplo, ao regravar um trecho do vídeo) sem zerar o banco e sem teste vermelho. A pasta **0. Preparação** precisa ter rodado pelo menos uma vez no banco usado; se reenviar só o cadastro de um perfil, reenvie também os projetos dele, porque o perfil novo começa sem projetos.
+### Regravando um trecho do vídeo
+
+Curtidas, médias, a página 2 e a página além do fim são conferidas em relação ao que a API tinha logo antes do envio: um script lê a listagem com `pm.sendRequest`, guarda o valor atual numa variável e o teste compara com ele. Assim, sem zerar o banco:
+
+- **reenviar uma requisição** ou **rodar de novo uma pasta** não deixa teste vermelho;
+- **rodar uma pasta sozinha com as variáveis vazias** (coleção recém-importada, por exemplo) também funciona: os projetos da preparação são procurados pelo título na listagem, os perfis da pasta 5 pelo dono desses projetos, e os dois 400 de feedback da pasta 4 usam o id 1 (o corpo é validado antes de a API procurar o projeto);
+- **reenviar só o cadastro de um perfil** limpa as variáveis dos projetos daquele perfil, porque o perfil novo começa sem projetos; a busca desse perfil na pasta 5 passa a conferir só que `projects` é uma lista, até os projetos serem cadastrados de novo.
+
+O que a coleção não resolve sozinha: a pasta **0. Preparação** precisa ter rodado pelo menos uma vez no banco usado, e as requisições dela dependem umas das outras (com as variáveis vazias, rode a pasta inteira, não uma requisição solta). Depois de zerar o banco ou trocar a `baseUrl` para outro servidor, rode a pasta 0 antes das outras, porque os ids guardados deixam de existir.
 
 ## Deploy no Render
 
